@@ -1,0 +1,21 @@
+{
+  "name": "list-episodes",
+  "version": "0.0.1",
+  "description": "Saiba quando sairá o próximo episódio da sua série favorita. PS: As sinopses estão em inglês",
+  "main": "index.js",
+  "author": "Rung <suporte@rung.com.br>",
+  "license": "MIT",
+  "category": "movies-and-tv",
+  "dependencies": {
+    "bluebird": "^3.4.7",
+    "moment": "^2.18.1",
+    "ramda": "^0.23.0",
+    "rung-sdk": "^1.0.7",
+    "superagent": "^3.5.0",
+    "superagent-promise": "^1.1.0"
+  },
+  "rung": {
+    "title": "Quando sai o próximo episódio?",
+    "preview": "Game of Thrones S07E01 - 16/07/2017"
+  }
+}
