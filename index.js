@@ -1,10 +1,10 @@
-const { create } = require('rung-sdk');
-const { String: Text, Natural } = require('rung-sdk/dist/types');
-const Bluebird = require('bluebird');
-const agent = require('superagent');
-const promisifyAgent = require('superagent-promise');
-const { map, mergeAll, filter, propSatisfies, lte, gte, join, isNil, allPass } = require('ramda');
-const moment = require('moment');
+import { create } from 'rung-sdk';
+import { String as Text, Natural } from 'rung-sdk/dist/types';
+import Bluebird from 'bluebird';
+import agent from 'superagent';
+import promisifyAgent from 'superagent-promise';
+import { map, mergeAll, filter, propSatisfies, lte, gte, isNil, allPass } from 'ramda';
+import moment from 'moment';
 
 const request = promisifyAgent(agent, Bluebird);
 
@@ -15,13 +15,14 @@ function createAlert(episode, showName, { average }, network) {
     return {
         [id]: {
             title: `${showName} S${season}E${number} - ${name} (${moment(airdate).format('DD/MM/YYYY')})`,
+            content: `${showName} S${season}E${number} - ${name} (${moment(airdate).format('DD/MM/YYYY')})`,
             comment: `
-                ### ${name} às ${airtime} na ${channel}
+                ### ${name} ${_('at')} ${airtime} ${_('on')} ${channel}
 
-                ${!isNil(summary) ? `\n${summary}` : ''}
-                ${!isNil(image) ? `\n![${name}](${image.medium})` : ''}
+                ${isNil(summary) ? '' : `\n${summary}`}
+                ${isNil(image) ? '' : `\n![${name}](${image.medium})`}
 
-                [Veja informações sobre o episódio](${url})
+                [${_('See episode info')}](${url})
                 
             `
         }
@@ -31,9 +32,9 @@ function createAlert(episode, showName, { average }, network) {
 function EndedShowError(name, url) {
     this.name = 'EndedShowError';
     this.message = {
-        title: `${name} já foi finalizada.`,
-        comment: `
-            _${name}_ já acabou, mas se você quiser saber mais sobre a série, [acesse aqui](${url})`
+        title: `${name} ${_('is already completed.')}`,
+        content: `${name} ${_('is already completed.')}`,
+        comment: `_${name}_ ${_('is already finished, but if you want to know more about the series')}, [${_('access here')}](${url})`
     };
 }
 
@@ -45,7 +46,7 @@ function main(context, done) {
         .then(({ body }) => {
             const { name, rating, network, _embedded, status, url } = body;
 
-            if (status == 'Ended') {
+            if (status === 'Ended') {
                 throw new EndedShowError(name, url);
             }
 
@@ -54,33 +55,32 @@ function main(context, done) {
             const isBetween = allPass([lte(today), gte(maxDay)]);
             const episodes = filter(
                 propSatisfies(isBetween, 'airdate'),
-                body._embedded.episodes
+                _embedded.episodes
             );
             const alerts = mergeAll(map(
                 episode => createAlert(episode, name, rating, network),
                 episodes
             ));
-            done(alerts);
+            done({ alerts });
         })
         .catch(err => {
             return err instanceof EndedShowError
-                ? done([err.message])
-                : done([])
+                ? done({ alerts: err.message })
+                : done({ alerts: {} });
         });
 }
 
 const params = {
     show: {
-        description: 'Qual série você deseja acompanhar?',
-        type: Text
+        description: _('Which series do you want to follow?'),
+        type: Text,
+        required: true
     },
     days: {
-        description: 'Com quantos dias de antecedência você deseja ser informado?',
+        description: _('How many days before do you want to be informed?'),
         type: Natural,
         default: 30
     }
 };
 
-const app = create(main, { params, primaryKey: true });
-
-module.exports = app;
+export default create(main, { params, primaryKey: true });
