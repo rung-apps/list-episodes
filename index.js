@@ -8,46 +8,51 @@ import moment from 'moment';
 
 const request = promisifyAgent(agent, Bluebird);
 
-function createAlert(episode, showName, { average }, network) {
+function render(showName, season, number, name, airdate) {
+    return `${showName} S${season}E${number} - ${name} (${moment(airdate).format('DD/MM/YYYY')})`;
+}
+
+function createAlert(episode, showId, showName, { average }, network) {
     const { id, name, season, number, airdate, airtime, image, summary, url } = episode;
     const channel = `${network.name} - ${network.country.code}`;
 
     return {
-        [id]: {
+        [showId + id]: {
             title: `${showName} S${season}E${number} - ${name} (${moment(airdate).format('DD/MM/YYYY')})`,
-            content: `${showName} S${season}E${number} - ${name} (${moment(airdate).format('DD/MM/YYYY')})`,
+            content: render(showName, season, number, name, airdate),
             comment: `
                 ### ${name} ${_('at')} ${airtime} ${_('on')} ${channel}
 
                 ${isNil(summary) ? '' : `\n${summary}`}
-                ${isNil(image) ? '' : `\n![${name}](${image.medium})`}
 
                 [${_('See episode info')}](${url})
-                
-            `
+            `,
+            resources: isNil(image) ? [] : [image.medium]
         }
     };
 }
 
-function EndedShowError(name, url) {
+function EndedShowError(id, name, url) {
     this.name = 'EndedShowError';
     this.message = {
-        title: `${name} ${_('is already completed.')}`,
-        content: `${name} ${_('is already completed.')}`,
-        comment: `_${name}_ ${_('is already finished, but if you want to know more about the series')}, [${_('access here')}](${url})`
+        [id]: {
+            title: `${name} ${_('is already completed.')}`,
+            content: `${name} ${_('is already completed.')}`,
+            comment: `**${name}** ${_('is already finished, but if you want to know more about the series')}, [${_('access here')}](${url})`
+        }
     };
 }
 
 function main(context, done) {
     const { show, days } = context.params;
-    const server = `http://api.tvmaze.com/singlesearch/shows?q=${show}&embed=episodes`;
+    const server = `https://api.tvmaze.com/singlesearch/shows?q=${show}&embed=episodes`;
 
     return request.get(server)
         .then(({ body }) => {
-            const { name, rating, network, _embedded, status, url } = body;
+            const { id, name, rating, network, _embedded, status, url } = body;
 
             if (status === 'Ended') {
-                throw new EndedShowError(name, url);
+                throw new EndedShowError(id, name, url);
             }
 
             const today = moment().format('YYYY-MM-DD');
@@ -58,7 +63,7 @@ function main(context, done) {
                 _embedded.episodes
             );
             const alerts = mergeAll(map(
-                episode => createAlert(episode, name, rating, network),
+                episode => createAlert(episode, id, name, rating, network),
                 episodes
             ));
             done({ alerts });
@@ -83,4 +88,10 @@ const params = {
     }
 };
 
-export default create(main, { params, primaryKey: true });
+export default create(main, {
+    params,
+    primaryKey: true,
+    title: _('New episodes'),
+    description: _('Find out when the next episode of your favorite series will come out.'),
+    preview: render('Game of Thrones', '06', '01', _('The Red Woman'), '20160424')
+});
