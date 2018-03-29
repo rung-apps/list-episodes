@@ -1,8 +1,6 @@
 {
   "name": "list-episodes",
-  "version": "0.0.3",
-  "description": "Find out when the next episode of your favorite series will come out. OBS: The synopses are in English",
-  "main": "index.js",
+  "version": "0.0.9",
   "author": "Rung <suporte@rung.com.br>",
   "license": "MIT",
   "category": "movies-and-tv",
@@ -14,11 +12,7 @@
     "superagent": "^3.5.0",
     "superagent-promise": "^1.1.0"
   },
-  "rung": {
-    "title": "Quando sai o próximo episódio?",
-    "preview": "Game of Thrones S07E01 - 16/07/2017"
-  },
   "devDependencies": {
-    "rung-cli": "^0.4.3"
+    "rung-cli": "^0.7.4"
   }
 }
