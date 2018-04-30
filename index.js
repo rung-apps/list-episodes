@@ -3,7 +3,7 @@ import { String as Text, Natural } from 'rung-sdk/dist/types';
 import Bluebird from 'bluebird';
 import agent from 'superagent';
 import promisifyAgent from 'superagent-promise';
-import { map, mergeAll, filter, propSatisfies, lte, gte, isNil, allPass } from 'ramda';
+import { map, mergeAll, filter, isEmpty, lte, gte, isNil, allPass } from 'ramda';
 import moment from 'moment';
 
 const request = promisifyAgent(agent, Bluebird);
@@ -58,8 +58,8 @@ function main(context, done) {
             const today = moment().format('YYYY-MM-DD');
             const maxDay = moment().add(days, 'days').format('YYYY-MM-DD');
             const isBetween = allPass([lte(today), gte(maxDay)]);
-            const episodes = filter(
-                propSatisfies(isBetween, 'airdate'),
+            const episodes = filter(({ airdate }) =>
+                isBetween(airdate) || isEmpty(airdate),
                 _embedded.episodes
             );
             const alerts = mergeAll(map(
@@ -92,6 +92,6 @@ export default create(main, {
     params,
     primaryKey: true,
     title: _('New episodes'),
-    description: _('Find out when the next episode of your favorite series will come out.'),
+    description: _('Stay tuned for the release of episodes and series!'),
     preview: render('Game of Thrones', '06', '01', _('The Red Woman'), '20160424')
 });
