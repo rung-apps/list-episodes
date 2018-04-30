@@ -1,4 +1,4 @@
-export default function({input}, done) {
+export default function ({ input }, done) {
     fetch(`https://api.tvmaze.com/search/shows?q=${input}`)
         .then(response => response.json())
         .then(result => {

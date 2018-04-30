@@ -1,6 +1,6 @@
 {
   "name": "list-episodes",
-  "version": "0.0.9",
+  "version": "1.0.1",
   "author": "Rung <suporte@rung.com.br>",
   "license": "MIT",
   "category": "movies-and-tv",
@@ -13,6 +13,6 @@
     "superagent-promise": "^1.1.0"
   },
   "devDependencies": {
-    "rung-cli": "^0.7.4"
+    "rung-cli": "^1.2.1"
   }
 }
